@@ -1,4 +1,3 @@
-package org.egbers.hubitat.driver
 //Originally Based off https://community.hubitat.com/t/release-tasmota-sonoff-hubitat-driver-device-support/15445/30
 
 metadata {
