@@ -5,7 +5,9 @@ metadata {
         capability "Actuator"
         capability "Bulb"
         capability "Initialize"
+        capability "ColorMode"
         capability "ColorControl"
+        capability "ColorTemperature"
         capability "SwitchLevel"
         capability "Refresh"
     }
@@ -29,7 +31,34 @@ def setColor(colormap) {
     def h = (360*colormap.hue)/100
     def s = colormap.saturation
     def l = colormap.level
+    state.colorMode = "RGB"
+    sendEvent(name: "colorMode", value: "RGB")
     sendCommand("HsbColor", "$h,$s,$l")
+}
+
+def setColorTemperature(value) {
+    log.debug "setColorTemperature('${value}')"
+    if(device.currentValue('colorTemperature') != value ) sendEvent(name: "colorTemperature", value: value)
+    // 153..500 = set color temperature from 153 (cold) to 500 (warm) for CT lights
+    // Tasmota use mired to measure color temperature
+    t = value != null ?  (value as Integer) : 0
+    // First make sure we have a Kelvin value we can more or less handle
+    // 153 mired is approx. 6536K
+    // 500 mired = 2000K
+    if(t > 6536) t = 6536
+    if(t < 2000) t = 2000
+    t = Math.round(1000000/t)
+    if(t < 153) t = 153
+    if(t > 500) t = 500
+    state.mired = t
+    state.hue = 0
+    state.saturation = 0
+    state.colorMode = "CT"
+    log.debug "setColorTemperature('${t}') ADJUSTED to Mired"
+    sendEvent(name: "colorMode", value: "CT")
+    sendEvent(name: "colorTemperature", value: "${t}")
+
+    sendCommand("CT", "${t}")
 }
 
 def initialize() {
